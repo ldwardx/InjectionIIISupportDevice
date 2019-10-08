@@ -16,6 +16,8 @@
 - (void)setProject:(NSString *)project;
 - (void)injectPending;
 
+- (void)watchDirectories:(NSArray<NSString *> *)directories;
+
 @end
 
 typedef NS_ENUM(int, InjectionCommand) {
@@ -34,6 +36,8 @@ typedef NS_ENUM(int, InjectionCommand) {
     InjectionXprobe,
     InjectionEval,
     InjectionVaccineSettingChanged,
+    
+    InjectionDirectory,
     
     InjectionTrace,
     InjectionUntrace,

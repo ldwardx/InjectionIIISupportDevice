@@ -17,5 +17,6 @@ typedef void (^InjectionCallback)(NSArray *filesChanged);
 @property(copy) InjectionCallback callback;
 
 - (instancetype)initWithRoot:(NSString *)projectRoot plugin:(InjectionCallback)callback;
+- (instancetype)initWithPaths:(NSArray<NSString *> *)paths plugin:(InjectionCallback)callback;
 
 @end

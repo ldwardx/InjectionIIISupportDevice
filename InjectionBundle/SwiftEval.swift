@@ -177,19 +177,15 @@ public class SwiftEval: NSObject {
             findDerivedData(url: sourceURL) else {
                 throw evalError("Could not locate derived data. Is the project under you home directory?")
         }
-        guard let (projectFile, logsDir) =
-            self.derivedLogs
-                .flatMap({ (URL(fileURLWithPath: self.projectFile!), URL(fileURLWithPath: $0)) }) ??
-                self.projectFile
-                    .flatMap({ logsDir(project: URL(fileURLWithPath: $0), derivedData: derivedData) })
-                    .flatMap({ (URL(fileURLWithPath: self.projectFile!), $0) }) ??
-                findProject(for: sourceURL, derivedData: derivedData) else {
+        guard let projectFile = findProject(for: sourceURL),
+            let logsDir = self.derivedLogs.flatMap({ URL(fileURLWithPath: $0) }) ??
+                logsDir(project: URL(fileURLWithPath: self.projectFile!), derivedData: derivedData) else {
                     throw evalError("""
-                        Could not locate containing project or it's logs.
-                        For a macOS app you need to turn off the App Sandbox.
-                        Have you customised the DerivedData path?
-                        """)
-        }
+                    Could not locate containing project or it's logs.
+                    For a macOS app you need to turn off the App Sandbox.
+                    Have you customised the DerivedData path?
+                    """)
+                }
 
         return (projectFile, logsDir)
     }
@@ -611,22 +607,20 @@ public class SwiftEval: NSObject {
         return findDerivedData(url: url.deletingLastPathComponent())
     }
 
-    func findProject(for source: URL, derivedData: URL) -> (projectFile: URL, logsDir: URL)? {
+    func findProject(for source: URL) -> URL? {
         let dir = source.deletingLastPathComponent()
         if dir.path == "/" {
             return nil
         }
 
-        var candidate = findProject(for: dir, derivedData: derivedData)
+        var projectFile = findProject(for: dir)
 
         if let files = try? FileManager.default.contentsOfDirectory(atPath: dir.path),
-            let project = file(withExt: "xcworkspace", in: files) ?? file(withExt: "xcodeproj", in: files),
-            let logsDir = logsDir(project: dir.appendingPathComponent(project), derivedData: derivedData),
-            mtime(logsDir) > candidate.flatMap({ mtime($0.logsDir) }) ?? 0 {
-                candidate = (dir.appendingPathComponent(project), logsDir)
+            let project = file(withExt: "xcworkspace", in: files) ?? file(withExt: "xcodeproj", in: files) {
+                projectFile = dir.appendingPathComponent(project)
         }
 
-        return candidate
+        return projectFile
     }
 
     func file(withExt ext: String, in files: [String]) -> String? {

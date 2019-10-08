@@ -242,9 +242,13 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
     if (!injector) return;
     [self writeCommand:InjectionProject withString:project];
     [self writeCommand:InjectionVaccineSettingChanged withString:[appDelegate vaccineConfiguration]];
-    fileWatcher = [[FileWatcher alloc]
-                   initWithRoot:project.stringByDeletingLastPathComponent
-                   plugin:injector];
+    [self watchDirectories:appDelegate.watchedDirectories.allObjects];
+}
+
+- (void)watchDirectories:(NSArray<NSString *> *)directories {
+    if (!injector) return;
+    [self writeCommand:InjectionDirectory withString:directories.description];
+    fileWatcher = [[FileWatcher alloc] initWithPaths:directories plugin:injector];
 }
 
 + (NSArray *)searchForTestWithFile:(NSString *)injectedFile projectRoot:(NSString *)projectRoot fileManager:(NSFileManager *)fileManager;

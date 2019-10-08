@@ -67,6 +67,20 @@ AppDelegate *appDelegate;
     [self application:NSApp openFile:nil];
 }
 
+- (IBAction)watchDirectory:(id)sender {
+    NSOpenPanel *open = [NSOpenPanel new];
+    open.prompt = NSLocalizedString(@"Select Watch Directory", @"Watch Directory");
+    open.allowsMultipleSelection = TRUE;
+    open.canChooseDirectories = TRUE;
+    open.canChooseFiles = FALSE;
+    if ([open runModal] == NSFileHandlingPanelOKButton) {
+        [open.URLs enumerateObjectsUsingBlock:^(NSURL * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            [_watchedDirectories addObject:obj.path];
+        }];
+        [self.lastConnection watchDirectories:self.watchedDirectories.allObjects];
+    }
+}
+
 - (IBAction)toggleTDD:(NSMenuItem *)sender {
     [self toggleState:sender];
     BOOL newSetting = sender.state == NSControlStateValueOn;
@@ -115,6 +129,8 @@ AppDelegate *appDelegate;
            [self fileWithExtension:@"xcworkspace" inFiles:fileList] ?:
            [self fileWithExtension:@"xcodeproj" inFiles:fileList]) {
             self.selectedProject = [open.URL.path stringByAppendingPathComponent:projectFile];
+            self.watchedDirectories = [NSMutableSet new];
+            [self.watchedDirectories addObject:open.URL.path];
             [self.lastConnection setProject:self.selectedProject];
             [[NSDocumentController sharedDocumentController]
              noteNewRecentDocumentURL:open.URL];

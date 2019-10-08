@@ -14,6 +14,7 @@
 @property (weak) IBOutlet NSMenuItem *enableWatcher, *traceItem;
 @property (weak) InjectionServer *lastConnection;
 @property NSString *selectedProject;
+@property NSMutableSet<NSString *> *watchedDirectories;
 
 - (NSString *)vaccineConfiguration;
 - (void)setMenuIcon:(NSString *)tiffName;

@@ -38,13 +38,18 @@ static void fileCallback(ConstFSEventStreamRef streamRef,
 
 - (instancetype)initWithRoot:(NSString *)projectRoot plugin:(InjectionCallback)callback;
 {
+    return [self initWithPaths:@[ projectRoot ] plugin:callback];
+}
+
+- (instancetype)initWithPaths:(NSArray<NSString *> *)paths plugin:(InjectionCallback)callback
+{
     if ((self = [super init])) {
         self.callback = callback;
         static struct FSEventStreamContext context;
         context.info = (__bridge void *)self;
         fileEvents = FSEventStreamCreate(kCFAllocatorDefault,
                                          fileCallback, &context,
-                                         (__bridge CFArrayRef) @[ projectRoot ],
+                                         (__bridge CFArrayRef) paths,
                                          kFSEventStreamEventIdSinceNow, .1,
                                          kFSEventStreamCreateFlagUseCFTypes |
                                          kFSEventStreamCreateFlagFileEvents);
