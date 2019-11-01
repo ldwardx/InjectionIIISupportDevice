@@ -18,6 +18,8 @@
 
 #import "InjectionIII-Swift.h"
 
+#define kDerivedDataBookmarkKey @"kDerivedDataBookmarkKey"
+
 static NSString *XcodeBundleID = @"com.apple.dt.Xcode";
 static dispatch_queue_t injectionQueue = dispatch_queue_create("InjectionQueue", DISPATCH_QUEUE_SERIAL);
 
@@ -27,6 +29,8 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
 @implementation InjectionServer {
     void (^injector)(NSArray *changed);
     FileWatcher *fileWatcher;
+    SwiftEval *builder;
+    NSURL *derivedData;
     NSMutableArray *pending;
 }
 
@@ -72,16 +76,23 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
     if (![[self readString] isEqualToString:INJECTION_KEY])
         return;
 
-    SwiftEval *builder = [SwiftEval new];
-
+    builder = [SwiftEval new];
+    builder.tmpDir = NSHomeDirectory();
+    
     // client spcific data for building
     if (NSString *frameworks = [self readString])
         builder.frameworks = frameworks;
     else
         return;
 
-    if (NSString *arch = [self readString])
+    if (NSString *arch = [self readString]) {
         builder.arch = arch;
+        if ([arch isEqualToString:@"arm64"]) {
+            if (NSString *sign = [self readString]) {
+                builder.sign = sign;
+            }
+        }
+    }
     else
         return;
 
@@ -90,19 +101,26 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
                                        runningApplicationsWithBundleIdentifier:XcodeBundleID].firstObject)
         builder.xcodeDev = [xcode.bundleURL.path stringByAppendingPathComponent:@"Contents/Developer"];
 
-
-    builder.projectFile = projectFile;
-
-    NSString *projectName = projectFile.stringByDeletingPathExtension.lastPathComponent;
-    NSString *derivedLogs = [NSString stringWithFormat:@"%@/Library/Developer/Xcode/DerivedData/%@-%@/Logs/Build",
-                             NSHomeDirectory(), [projectName stringByReplacingOccurrencesOfString:@"[\\s]+" withString:@"_"
-                                                  options:NSRegularExpressionSearch range:NSMakeRange(0, projectName.length)],
-                             [XcodeHash hashStringForPath:projectFile]];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:derivedLogs])
-        builder.derivedLogs = derivedLogs;
-    else
-        NSLog(@"Bad estimate of Derived Logs: %@ -> %@", projectFile, derivedLogs);
-
+    // locate derived data and ask permission
+    derivedData = [builder findDerivedDataWithUrl:[NSURL fileURLWithPath:NSHomeDirectory()]];
+    if (derivedData) {
+        if (![[ScopedBookmarkManager bookmarkFor:kDerivedDataBookmarkKey].path isEqualToString:derivedData.path]) {
+            __block BOOL permission = NO;
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                permission = [[DirectoryAccessHelper new] askPermissionFor:derivedData
+                                                                  bookmark:kDerivedDataBookmarkKey
+                                                                       app:@"InjectionIII"];
+            });
+            if (!permission) {
+                NSLog(@"Could not access derived data.");
+                return;
+            }
+        }
+    } else {
+        NSLog(@"Could not locate derived data. Is the project under you home directory?");
+        return;
+    }
+    
     // callback on errors
     builder.evalError = ^NSError *(NSString *message) {
         [self writeCommand:InjectionLog withString:message];
@@ -127,7 +145,7 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
 //                        [appDelegate setMenuIcon:@"InjectionError"];
 //                }
 //                else
-                    [self writeCommand:InjectionInject withString:swiftSource];
+                    [self injectWithSource:swiftSource];;
             }
             else
                 [self writeCommand:InjectionLog withString:@"The file watcher is turned off"];
@@ -232,14 +250,47 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
 
 - (void)injectPending {
     for (NSString *swiftSource in pending)
-        dispatch_async(injectionQueue, ^{
-            [self writeCommand:InjectionInject withString:swiftSource];
-        });
+        [self injectWithSource:swiftSource];
     [pending removeAllObjects];
+}
+
+- (void)injectWithSource:(NSString *)source {
+    dispatch_async(injectionQueue, ^{
+        if ([ScopedBookmarkManager startAccessingFor:kDerivedDataBookmarkKey]) {
+            NSString *tmpFile = [builder rebuildClassWithOldClass:nil
+                                                  classNameOrFile:source extra:nil error:nil];
+            [ScopedBookmarkManager stopAccessingFor:kDerivedDataBookmarkKey];
+            if (tmpFile) {
+                [self writeCommand:InjectionLoad withString:tmpFile];
+                if ([builder.arch isEqualToString:@"arm64"]) {
+                    NSString *dylib = [tmpFile stringByAppendingPathExtension:@"dylib"];
+                    NSData *dylibData = [NSData dataWithContentsOfFile:dylib];
+                    [self writeData:dylibData];
+                    
+                    NSString *classes = [tmpFile stringByAppendingPathExtension:@"classes"];
+                    NSData *classesData = [NSData dataWithContentsOfFile:classes];
+                    [self writeData:classesData];
+                }
+            } else
+                NSLog(@"dylib generate failed");
+        } else
+            NSLog(@"Could not access derived data.");
+    });
 }
 
 - (void)setProject:(NSString *)project {
     if (!injector) return;
+    
+    builder.projectFile = project;
+    if ([ScopedBookmarkManager startAccessingFor:kDerivedDataBookmarkKey]) {
+        builder.derivedLogs = [builder logsDirWithProject:[NSURL fileURLWithPath:project] derivedData:derivedData].path;
+        [ScopedBookmarkManager stopAccessingFor:kDerivedDataBookmarkKey];
+    }
+    if (!builder.derivedLogs) {
+        NSLog(@"Could not locate derived logs.");
+        return;
+    }
+    
     [self writeCommand:InjectionProject withString:project];
     [self writeCommand:InjectionVaccineSettingChanged withString:[appDelegate vaccineConfiguration]];
     [self watchDirectories:appDelegate.watchedDirectories.allObjects];

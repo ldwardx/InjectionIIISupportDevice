@@ -13,7 +13,7 @@
 //  Used as the basis of a new version of Injection.
 //
 
-#if arch(x86_64) || arch(i386) // simulator/macOS only
+#if arch(x86_64) || arch(i386) || arch(arm64)
 import Foundation
 
 private func debug(_ str: String) {
@@ -137,6 +137,7 @@ public class SwiftEval: NSObject {
         return instance
     }
 
+    @objc public var sign = "-"
     @objc public var signer: ((_: String) -> Bool)?
     @objc public var vaccineEnabled: Bool = false
 
@@ -310,6 +311,12 @@ public class SwiftEval: NSObject {
             throw evalError("Re-compilation failed (\(tmpDir)/command.sh)\n\(try! String(contentsOfFile: logfile))")
         }
 
+        guard shell(command: """
+            \(xcodeDev)/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm \(tmpfile).o | grep -E ' S _OBJC_CLASS_\\$_| _(_T0|\\$S|\\$s).*CN$' | awk '{print $3}' >\(tmpfile).classes
+            """) else {
+            throw evalError("Could not list class symbols")
+        }
+        
         SwiftEval.compileByClass[classNameOrFile] = (compileCommand, sourceFile)
         if SwiftEval.longTermCache[classNameOrFile] as? String != compileCommand && classNameOrFile.hasPrefix("/") {
             SwiftEval.longTermCache[classNameOrFile] = compileCommand
@@ -325,6 +332,8 @@ public class SwiftEval: NSObject {
         let osSpecific: String
         if compileCommand.contains("iPhoneSimulator.platform") {
             osSpecific = "-isysroot \(xcodeDev)/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk -mios-simulator-version-min=9.0 -L\(toolchain)/usr/lib/swift/iphonesimulator -undefined dynamic_lookup"// -Xlinker -bundle_loader -Xlinker \"\(Bundle.main.executablePath!)\""
+        } else if compileCommand.contains("iPhoneOS.platform") {
+            osSpecific = "-isysroot \(xcodeDev)/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -mios-version-min=9.0 -L\(toolchain)/usr/lib/swift/iphoneos -undefined dynamic_lookup"// -Xlinker -bundle_loader -Xlinker \"\(Bundle.main.executablePath!)\""
         } else if compileCommand.contains("AppleTVSimulator.platform") {
             osSpecific = "-isysroot \(xcodeDev)/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator.sdk -mtvos-simulator-version-min=9.0 -L\(toolchain)/usr/lib/swift/appletvsimulator -undefined dynamic_lookup"// -Xlinker -bundle_loader -Xlinker \"\(Bundle.main.executablePath!)\""
         } else {
@@ -352,7 +361,7 @@ public class SwiftEval: NSObject {
             }
             #else
             guard shell(command: """
-                export CODESIGN_ALLOCATE=\(xcodeDev)/Toolchains/XcodeDefault.xctoolchain/usr/bin/codesign_allocate; codesign --force -s '-' "\(tmpfile).dylib"
+                export CODESIGN_ALLOCATE=\(xcodeDev)/Toolchains/XcodeDefault.xctoolchain/usr/bin/codesign_allocate; codesign --force -s '\(sign)' "\(tmpfile).dylib"
                 """) else {
                 throw evalError("Codesign failed")
             }
@@ -393,13 +402,9 @@ public class SwiftEval: NSObject {
         else {
             // grep out symbols for classes being injected from object file
 
+            #if !arch(arm64)
             try injectGenerics(tmpfile: tmpfile, handle: dl)
-
-            guard shell(command: """
-                \(xcodeDev)/Toolchains/XcodeDefault.xctoolchain/usr/bin/nm \(tmpfile).o | grep -E ' S _OBJC_CLASS_\\$_| _(_T0|\\$S|\\$s).*CN$' | awk '{print $3}' >\(tmpfile).classes
-                """) else {
-                throw evalError("Could not list class symbols")
-            }
+            #endif
             guard var symbols = (try? String(contentsOfFile: "\(tmpfile).classes"))?.components(separatedBy: "\n") else {
                 throw evalError("Could not load class symbol list")
             }
@@ -591,7 +596,7 @@ public class SwiftEval: NSObject {
         }
     }
 
-    func findDerivedData(url: URL) -> URL? {
+    @objc public func findDerivedData(url: URL) -> URL? {
         if url.path == "/" {
             return nil
         }
@@ -632,7 +637,7 @@ public class SwiftEval: NSObject {
         return stat(url.path, &info) == 0 ? info.st_mtimespec.tv_sec : 0
     }
 
-    func logsDir(project: URL, derivedData: URL) -> URL? {
+    @objc public func logsDir(project: URL, derivedData: URL) -> URL? {
         let filemgr = FileManager.default
         let projectPrefix = project.deletingPathExtension()
             .lastPathComponent.replacingOccurrences(of: "\\s+", with: "_",

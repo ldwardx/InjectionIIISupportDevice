@@ -11,9 +11,11 @@
 //  from SwiftEval.swift to recompile and reload class.
 //
 
-#if arch(x86_64) || arch(i386) // simulator/macOS only
+#if arch(x86_64) || arch(i386) || arch(arm64)
 import Foundation
+#if !arch(arm64)
 import XCTest
+#endif
 
 private let debugSweep = getenv("DEBUG_SWEEP") != nil
 
@@ -138,16 +140,19 @@ public class SwiftInjection: NSObject {
                        byteAddr(classMetadata) + vtableOffset, vtableLength)
             }
 
+            #if !arch(arm64)
             if newClass.isSubclass(of: XCTestCase.self) {
                 testClasses.append(newClass)
 //                if ( [newClass isSubclassOfClass:objc_getClass("QuickSpec")] )
 //                [[objc_getClass("_TtC5Quick5World") sharedWorld]
 //                setCurrentExampleMetadata:nil];
             }
+            #endif
         }
 
         // Thanks https://github.com/johnno1962/injectionforxcode/pull/234
         if !testClasses.isEmpty {
+            #if !arch(arm64)
             testQueue.async {
                 testQueue.suspend()
                 let timer = Timer(timeInterval: 0, repeats:false, block: { _ in
@@ -162,6 +167,7 @@ public class SwiftInjection: NSObject {
                 })
                 RunLoop.main.add(timer, forMode: RunLoopMode.commonModes)
             }
+            #endif
         } else {
             var injectedClasses = [AnyClass]()
             let injectedSEL = #selector(SwiftInjected.injected)

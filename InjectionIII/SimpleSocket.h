@@ -20,6 +20,8 @@
 
 + (instancetype _Nullable)connectTo:(NSString *_Nonnull)address;
 + (BOOL)parseV4Address:(NSString *_Nonnull)address into:(struct sockaddr_storage *_Nonnull)serverAddr;
++ (nullable NSString *)getIPAddress;
++ (BOOL)isValidIPAddress:(NSString *)address;
 
 - (instancetype _Nonnull)initSocket:(int)socket;
 
@@ -30,6 +32,9 @@
 - (NSString *_Nullable)readString;
 - (BOOL)writeString:(NSString *_Nonnull)string;
 - (BOOL)writeCommand:(int)command withString:(NSString *_Nullable)string;
+
+- (NSData *_Nullable)readData;
+- (BOOL)writeData:(NSData *_Nonnull)data;
 
 @end
 

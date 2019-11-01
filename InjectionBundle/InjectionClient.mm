@@ -16,6 +16,10 @@
 #import "tvOSInjection-Swift.h"
 #elif __has_include("iOSInjection10-Swift.h")
 #import "iOSInjection10-Swift.h"
+#elif __has_include("iOSInjection10_Device-Swift.h")
+#import "iOSInjection10_Device-Swift.h"
+#elif __has_include("iOSInjection_Device-Swift.h")
+#import "iOSInjection_Device-Swift.h"
 #else
 #import "iOSInjection-Swift.h"
 #endif
@@ -101,7 +105,19 @@ static struct {
 
 + (void)load {
     // connect to InjetionIII.app using sicket
-    if (InjectionClient *client = [self connectTo:INJECTION_ADDRESS])
+#ifdef __arm64__
+    NSString *ip = nil;
+    NSString *ipFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"ip" ofType:nil];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:ipFile])
+        ip = [[NSString stringWithContentsOfFile:ipFile encoding:NSUTF8StringEncoding error:nil]
+              stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (![SimpleSocket isValidIPAddress:ip])
+        printf("💉 Not found \"ip\" file containing the Mac IP address in the bundle. The connection may fail.");
+#else
+    NSString *ip = [SimpleSocket getIPAddress];
+#endif
+    NSString *address = ip ? [ip stringByAppendingString:INJECTION_PORT] : INJECTION_PORT;
+    if (InjectionClient *client = [self connectTo:address])
         [client run];
     else
         printf("💉 Injection loaded but could not connect. Is InjectionIII.app running?\n");
@@ -114,7 +130,18 @@ static struct {
 
     [self writeString:INJECTION_KEY];
     [self writeString:[NSBundle mainBundle].privateFrameworksPath];
-#ifdef __LP64__
+#ifdef __arm64__
+    [self writeString:@"arm64"];
+
+    NSString *sign = @"-";
+    NSString *signFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"sign" ofType:nil];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:signFile])
+        sign = [[NSString stringWithContentsOfFile:signFile encoding:NSUTF8StringEncoding error:nil]
+                stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+    else
+        printf("💉 Not found \"sign\" file containing the app sign in the bundle. The dylib load may fail.");
+    [self writeString:sign];
+#elif __LP64__
     [self writeString:@"x86_64"];
 #else
     [self writeString:@"i386"];
@@ -132,6 +159,16 @@ static struct {
         return [reader readString].boolValue;
     };
 
+    NSFileManager *filemgr = [NSFileManager defaultManager];
+#ifdef __arm64__
+    NSString *injectDataPath = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,
+                                                                    NSUserDomainMask,
+                                                                    YES).firstObject
+                                stringByAppendingPathComponent:@"InjectData"];
+    if (![filemgr fileExistsAtPath:injectDataPath])
+        [filemgr createDirectoryAtPath:injectDataPath withIntermediateDirectories:NO attributes:nil error:nil];
+#endif
+    
     // As tmp file names come in, inject them
     InjectionCommand command;
     while ((command = (InjectionCommand)[self readInt]) != InjectionEOF) {
@@ -160,7 +197,7 @@ static struct {
             break;
         }
         case InjectionLog:
-            printf("%s\n", [self readString].UTF8String);
+            printf("💉 %s\n", [self readString].UTF8String);
             break;
         case InjectionSigned:
             [writer writeString:[self readString]];
@@ -180,6 +217,27 @@ static struct {
             break;
         default: {
             NSString *changed = [self readString];
+            if (command == InjectionLoad) {
+#ifdef __arm64__
+                NSString *tmpFile = [injectDataPath stringByAppendingPathComponent:changed.lastPathComponent];
+                NSString *dylib = [tmpFile stringByAppendingPathExtension:@"dylib"];
+                [filemgr removeItemAtPath:dylib error:nil];
+                NSData *dylibData = [self readData];
+                [filemgr createFileAtPath:dylib contents:dylibData attributes:nil];
+                changed = [dylib stringByDeletingPathExtension];
+                
+                NSString *classes = [tmpFile stringByAppendingPathExtension:@"classes"];
+                [filemgr removeItemAtPath:classes error:nil];
+                NSData *classesData = [self readData];
+                [filemgr createFileAtPath:classes contents:classesData attributes:nil];
+#else
+                // Reset dylib to prevent macOS 10.15 from blocking it
+                NSString *dylib = [changed stringByAppendingPathExtension:@"dylib"];
+                NSData *dylibData = [NSData dataWithContentsOfFile:dylib];
+                [filemgr removeItemAtPath:dylib error:nil];
+                [dylibData writeToFile:dylib atomically:YES];
+#endif
+            }
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSError *err = nil;
                 switch (command) {

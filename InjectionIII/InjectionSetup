@@ -1,0 +1,53 @@
+#! /bin/bash
+#InjectionSetup
+
+export CODESIGN_ALLOCATE=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/codesign_allocate
+
+app="$BUILT_PRODUCTS_DIR/$FULL_PRODUCT_NAME"
+bundle_src="/Applications/InjectionIII.app/Contents/Resources/iOSInjection_Device.bundle"
+bundle_dst="$app/iOSInjection_Device.bundle"
+
+function check_arch {
+    if [[ "$CONFIGURATION" != "Debug" || "$ARCHS" != "arm64" ]]; then
+        exit 0
+    fi
+}
+
+function check_src() {
+    if [[ ! -d "$bundle_src" ]]; then
+        echo "Not found iOSInjection_Device.bundle, expect location:\n$bundle_src"
+        exit 0
+    fi
+}
+
+function sign_bundle() {
+    sign "$bundle_src"
+    find "$bundle_src" -name '*.dylib' | while read file; do sign "$file"; done
+}
+
+function sign() {
+    /usr/bin/codesign --deep --force -s "$EXPANDED_CODE_SIGN_IDENTITY" "$1"
+}
+
+function copy_bundle() {  
+    if [[ -d "$bundle_dst" ]]; then
+        rm -rf "$bundle_dst"
+    fi
+    cp -rf "$bundle_src" "$bundle_dst"
+}
+
+function recordSign() {
+    echo "$EXPANDED_CODE_SIGN_IDENTITY" > "$bundle_dst/sign"
+}
+
+function recordIP() {
+    for NUM in $(seq 0 1000); do
+        ip=`ipconfig getifaddr en$NUM`
+        if [ -n "$ip" ]; then
+            break
+        fi
+    done
+    echo "$ip" > "$bundle_dst/ip"
+}
+
+check_arch && check_src && sign_bundle && copy_bundle && recordSign && recordIP

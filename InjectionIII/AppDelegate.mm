@@ -40,7 +40,9 @@ AppDelegate *appDelegate;
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application
     appDelegate = self;
-    [InjectionServer startServer:INJECTION_ADDRESS];
+    
+    NSString *ip = [SimpleSocket getIPAddress];
+    [InjectionServer startServer:ip ? [ip stringByAppendingString:INJECTION_PORT] : INJECTION_PORT];
 
     NSStatusBar *statusBar = [NSStatusBar systemStatusBar];
     statusItem = [statusBar statusItemWithLength:statusBar.thickness];
