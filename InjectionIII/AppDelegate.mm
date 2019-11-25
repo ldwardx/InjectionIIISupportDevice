@@ -24,6 +24,9 @@
 #import "../XprobePlugin/Classes/XprobePluginMenuController.h"
 #endif
 
+#define kSelectedProject @"kSelectedProject"
+#define kWatchedDirectories @"kWatchedDirectories"
+
 AppDelegate *appDelegate;
 
 @interface AppDelegate ()
@@ -40,6 +43,11 @@ AppDelegate *appDelegate;
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application
     appDelegate = self;
+    
+    self.selectedProject = [[NSUserDefaults standardUserDefaults] objectForKey:kSelectedProject];
+    NSArray *watchedDirectories = [[NSUserDefaults standardUserDefaults] objectForKey:kWatchedDirectories];
+    self.watchedDirectories = watchedDirectories.count > 0 ?
+                                [[NSMutableSet alloc] initWithArray:watchedDirectories] : nil;
     
     NSString *ip = [SimpleSocket getIPAddress];
     [InjectionServer startServer:ip ? [ip stringByAppendingString:INJECTION_PORT] : INJECTION_PORT];
@@ -79,6 +87,7 @@ AppDelegate *appDelegate;
         [open.URLs enumerateObjectsUsingBlock:^(NSURL * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             [_watchedDirectories addObject:obj.path];
         }];
+        [[NSUserDefaults standardUserDefaults] setObject:self.watchedDirectories.allObjects forKey:kWatchedDirectories];
         [self.lastConnection watchDirectories:self.watchedDirectories.allObjects];
     }
 }
@@ -130,9 +139,15 @@ AppDelegate *appDelegate;
         if(NSString *projectFile =
            [self fileWithExtension:@"xcworkspace" inFiles:fileList] ?:
            [self fileWithExtension:@"xcodeproj" inFiles:fileList]) {
-            self.selectedProject = [open.URL.path stringByAppendingPathComponent:projectFile];
-            self.watchedDirectories = [NSMutableSet new];
-            [self.watchedDirectories addObject:open.URL.path];
+            NSString *projectPath = [open.URL.path stringByAppendingPathComponent:projectFile];
+            if ([self.selectedProject isEqualToString:projectPath] == NO) {
+                self.selectedProject = projectPath;
+                self.watchedDirectories = [NSMutableSet new];
+                [self.watchedDirectories addObject:open.URL.path];
+                NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+                [ud setObject:self.selectedProject forKey:kSelectedProject];
+                [ud setObject:self.watchedDirectories.allObjects forKey:kWatchedDirectories];
+            }
             [self.lastConnection setProject:self.selectedProject];
             [[NSDocumentController sharedDocumentController]
              noteNewRecentDocumentURL:open.URL];

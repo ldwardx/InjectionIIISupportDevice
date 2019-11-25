@@ -48,7 +48,8 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
 }
 
 - (void)runInBackground {
-    [self writeString:NSHomeDirectory()];
+    NSString *tmpDir = @"/tmp";
+    [self writeString:tmpDir];
 
     NSString *projectFile = appDelegate.selectedProject;
     static BOOL MAS = false;
@@ -77,7 +78,7 @@ static NSMutableDictionary *projectInjected = [NSMutableDictionary new];
         return;
 
     builder = [SwiftEval new];
-    builder.tmpDir = NSHomeDirectory();
+    builder.tmpDir = tmpDir;
     
     // client spcific data for building
     if (NSString *frameworks = [self readString])
