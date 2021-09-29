@@ -1,6 +1,10 @@
 #! /bin/bash
 #InjectionSetup
 
+if [[ ! -d "/Applications/Xcode.app" ]]; then
+    exit 0
+fi
+
 export CODESIGN_ALLOCATE=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/codesign_allocate
 
 app="$BUILT_PRODUCTS_DIR/$FULL_PRODUCT_NAME"

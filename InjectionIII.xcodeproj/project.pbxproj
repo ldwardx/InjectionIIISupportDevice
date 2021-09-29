@@ -494,7 +494,7 @@
 					};
 					BBCA01FD1FB0F10300E45F0F = {
 						CreatedOnToolsVersion = 9.0.1;
-						ProvisioningStyle = Manual;
+						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.Sandbox = {
 								enabled = 1;
@@ -503,7 +503,7 @@
 					};
 					BBCA02441FB1065D00E45F0F = {
 						CreatedOnToolsVersion = 9.0.1;
-						ProvisioningStyle = Manual;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -596,7 +596,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SYMROOT=/tmp/Injection\nexport PLATFORM_DIR_OS=$DEVELOPER_DIR/Platforms/iPhoneOS.platform &&\n\"$DEVELOPER_BIN_DIR\"/xcodebuild SYMROOT=$SYMROOT PRODUCT_NAME=iOSInjection_Device LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch arm64 -sdk iphoneos -config Release -target InjectionBundle ENABLE_BITCODE=NO ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES &&\n/Applications/Xcode101.app/Contents/Developer/usr/bin/xcodebuild SYMROOT=/tmp/Injection10 PRODUCT_NAME=iOSInjection10_Device LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch arm64 -sdk iphoneos -config Release -target InjectionBundle ENABLE_BITCODE=NO ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES &&\nrsync -au $SYMROOT/Release-iphoneos/iOSInjection_Device.bundle /tmp/Injection10/Release-iphoneos/iOSInjection10_Device.bundle \"$CODESIGNING_FOLDER_PATH/Contents/Resources\" &&\nexport PLATFORM_DIR_OS=$DEVELOPER_DIR/Platforms/iPhoneSimulator.platform &&\n\"$DEVELOPER_BIN_DIR\"/xcodebuild SYMROOT=$SYMROOT PRODUCT_NAME=iOSInjection LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch x86_64 -sdk iphonesimulator -config Release -target InjectionBundle &&\n/Applications/Xcode101.app/Contents/Developer/usr/bin/xcodebuild SYMROOT=/tmp/Injection10 PRODUCT_NAME=iOSInjection10 LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch x86_64 -sdk iphonesimulator -config Release -target InjectionBundle &&\nrsync -au $SYMROOT/Release-iphonesimulator/iOSInjection.bundle /tmp/Injection10/Release-iphonesimulator/iOSInjection10.bundle \"$CODESIGNING_FOLDER_PATH/Contents/Resources\" &&\nexport PLATFORM_DIR_OS=$DEVELOPER_DIR/Platforms/AppleTVSimulator.platform &&\n\"$DEVELOPER_BIN_DIR\"/xcodebuild SYMROOT=$SYMROOT PRODUCT_NAME=tvOSInjection LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/appletvsimulator $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch x86_64 -sdk appletvsimulator -config Release -target InjectionBundle &&\n/Applications/Xcode101.app/Contents/Developer/usr/bin/xcodebuild SYMROOT=/tmp/Injection10 PRODUCT_NAME=tvOSInjection10 LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/appletvsimulator $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch x86_64 -sdk appletvsimulator -config Release -target InjectionBundle &&\nrsync -au $SYMROOT/Release-appletvsimulator/tvOSInjection.bundle /tmp/Injection10/Release-appletvsimulator/tvOSInjection10.bundle \"$CODESIGNING_FOLDER_PATH/Contents/Resources\" &&\nexport PLATFORM_DIR_OS=$DEVELOPER_DIR/Platforms/MacOS.platform &&\n/Applications/Xcode101.app/Contents/Developer/usr/bin/xcodebuild SYMROOT=/tmp/Injection10 PRODUCT_NAME=macOSInjection10 LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch x86_64 -config Release -target InjectionBundle &&\nrsync -au /tmp/Injection10/Release/macOSInjection10.bundle \"$CODESIGNING_FOLDER_PATH/Contents/Resources\" &&\nfind $CODESIGNING_FOLDER_PATH/Contents/Resources/*.bundle -name '*.h' -delete\n\nrsync -au \"$SRCROOT/InjectionIII/InjectionSetup\" \"$CODESIGNING_FOLDER_PATH/Contents/Resources\"\n";
+			shellScript = "SYMROOT=/tmp/Injection\nexport PLATFORM_DIR_OS=$DEVELOPER_DIR/Platforms/iPhoneOS.platform &&\n\"$DEVELOPER_BIN_DIR\"/xcodebuild SYMROOT=$SYMROOT PRODUCT_NAME=iOSInjection_Device LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch arm64 -sdk iphoneos -config Debug -target InjectionBundle ENABLE_BITCODE=NO ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES &&\nrsync -au $SYMROOT/Debug-iphoneos/iOSInjection_Device.bundle \"$CODESIGNING_FOLDER_PATH/Contents/Resources\" &&\nexport PLATFORM_DIR_OS=$DEVELOPER_DIR/Platforms/iPhoneSimulator.platform &&\n\"$DEVELOPER_BIN_DIR\"/xcodebuild SYMROOT=$SYMROOT PRODUCT_NAME=iOSInjection LD_RUNPATH_SEARCH_PATHS=\"$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator $PLATFORM_DIR_OS/Developer/Library/Frameworks @loader_path/Frameworks\" -arch x86_64 -sdk iphonesimulator -config Debug -target InjectionBundle &&\nrsync -au $SYMROOT/Debug-iphonesimulator/iOSInjection.bundle \"$CODESIGNING_FOLDER_PATH/Contents/Resources\" &&\nfind $CODESIGNING_FOLDER_PATH/Contents/Resources/*.bundle -name '*.h' -delete\n\nrsync -au \"$SRCROOT/InjectionIII/InjectionSetup\" \"$CODESIGNING_FOLDER_PATH/Contents/Resources\"\n";
 			showEnvVarsInLog = 0;
 		};
 		BBE429591FD7D476009FBA8B /* ShellScript */ = {
@@ -871,10 +871,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = InjectionIII/InjectionIII.entitlements;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = E23HUP39A3;
+				DEVELOPMENT_TEAM = 4TWFBYM83P;
 				INFOPLIST_FILE = InjectionIII/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
@@ -890,10 +890,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = InjectionIII/InjectionIII.entitlements;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = E23HUP39A3;
+				DEVELOPMENT_TEAM = 4TWFBYM83P;
 				INFOPLIST_FILE = InjectionIII/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
@@ -907,10 +907,10 @@
 		BBCA02491FB1065D00E45F0F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Developer ID Application";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = E23HUP39A3;
+				DEVELOPMENT_TEAM = 4TWFBYM83P;
 				INFOPLIST_FILE = InjectionBundle/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
@@ -930,10 +930,10 @@
 		BBCA024A1FB1065D00E45F0F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Developer ID Application";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = E23HUP39A3;
+				DEVELOPMENT_TEAM = 4TWFBYM83P;
 				INFOPLIST_FILE = InjectionBundle/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;

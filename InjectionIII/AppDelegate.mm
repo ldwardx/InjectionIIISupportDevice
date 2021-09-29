@@ -79,7 +79,7 @@ AppDelegate *appDelegate;
 
 - (IBAction)watchDirectory:(id)sender {
     NSOpenPanel *open = [NSOpenPanel new];
-    open.prompt = NSLocalizedString(@"Select Watch Directory", @"Watch Directory");
+    open.prompt = NSLocalizedString(@"Add Subproject", @"Subproject");
     open.allowsMultipleSelection = TRUE;
     open.canChooseDirectories = TRUE;
     open.canChooseFiles = FALSE;
@@ -126,7 +126,7 @@ AppDelegate *appDelegate;
 
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
     NSOpenPanel *open = [NSOpenPanel new];
-    open.prompt = NSLocalizedString(@"Select Project Directory", @"Project Directory");
+    open.prompt = NSLocalizedString(@"Open Main Project", @"Main Project");
     //    open.allowsMultipleSelection = TRUE;
     if (filename)
         open.directory = filename;

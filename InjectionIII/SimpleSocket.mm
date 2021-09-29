@@ -201,9 +201,9 @@
     uint32_t length = [self readInt];
     if (length == ~0)
         return nil;
-    char utf8[length + 1];
-    if (read(clientSocket, utf8, length) != length)
-        return nil;
+    char *utf8 = (char *)malloc(length + 1);
+    uint32_t readLength = 0;
+    while ((readLength += read(clientSocket, utf8 + readLength, length - readLength)) != length);
     utf8[length] = '\000';
     return [NSString stringWithUTF8String:utf8];
 }
