@@ -23,5 +23,13 @@ Support iOS13+ device.
     }
 #endif
 ```
-2. Copy ```InjectionSetup.sh``` to your project.
-3. ```Build Phase -> Run Script ```exe setup shell.
+2. ```Build Phase -> Run Script ``` run setup shell.
+```shell
+if [[ "$CONFIGURATION" = "Debug" && "$ARCHS" = "arm64" ]]; then
+    InjectionSetup="/Applications/InjectionIII.app/Contents/Resources/InjectionSetup"
+    if [[ -e "$InjectionSetup" ]]; then
+        sh "$InjectionSetup"
+    fi
+fi
+```
+4. Done.
